@@ -4,11 +4,12 @@ import fetchOhlcvData from "./fetchData";
 
 
 const CandlestickChart = (props) => {
-    const {url, started} = props
+    const url = props.url
+    const started = props.started
 
     const [csSeries, setCsSeries] = useState(null)
-    const chartContainerRef = useRef();
     
+    const chartContainerRef = useRef();
     const chartOptions = { 
         layout: { 
           textColor: 'black',
@@ -104,8 +105,10 @@ const CandlestickChart = (props) => {
 
             fetchOhlcvData(url)
                 .then(d =>  d.slice(-1)[0])
-                .then(d => csSeries.update(d))
-                .catch(err=>console.error(err))
+                .then(d => {
+                    csSeries.update(d)
+                    console.log(d)
+                })
 
           }, 20000)
         }
