@@ -1,10 +1,13 @@
 import os
 import json
+import pandas as pd
+from collections import namedtuple
 from datetime import datetime, timedelta, time as dttm
 import logging
+
+import requests
 from pya3 import Aliceblue
 from backend_py.config.config import get_server_config, get_system_config, get_user_config
-
 
 logger = logging.getLogger(__name__)
 FILE_DIR = os.path.abspath(os.path.join(__file__, '..'))
@@ -50,3 +53,67 @@ class AliceBroker():
             with open(session_fpath, 'w') as fp:
                 json.dump(session, fp)
             return session['sessionID']
+
+    def _historical_alice_api(self, instrument: namedtuple, from_datetime: datetime, to_datetime: datetime,
+                              interval: str = "1", indices: bool = False):
+        """
+        Get hitorical data from alice
+        :param token: int, alice instrument token
+        :param from_datetime: datetime object
+        :param to_datetime: datetime object
+        :return: dataframe, ohlcv with datetime index
+        """
+
+        result_cols = ['open', 'high', 'low', 'close', 'volume']
+
+        payload = json.dumps({"token": str(instrument.token),
+                              "exchange": instrument.exchange if not indices else f"{instrument.exchange}::index",
+                              "from": str(int(from_datetime.timestamp() * 1000)),  # "1660128489000", 1666268893
+                              "to": str(int(to_datetime.timestamp() * 1000)),  # "1660221861000", 1666355293
+                              "resolution": interval
+                              })
+        headers = {
+            'Authorization': f'Bearer {self.user_id} {self.session_id}',
+            'Content-Type': 'application/json'
+        }
+        lst = requests.post(f'{self.base_url}/chart/history', data=payload, headers=headers)
+        response = lst.json()
+        if response['stat'] == 'Not_Ok':
+            return response
+        else:
+            df = pd.DataFrame(lst.json()['result'])
+            df = df.rename(columns={'time': 'datetime'})
+            df = df[['datetime'] + result_cols]
+            df.set_index(pd.DatetimeIndex(df['datetime']), inplace=True)
+            df.drop(columns='datetime', inplace=True)
+            df['volume'] = df['volume'].astype(int)
+            return df[result_cols]
+
+    def fetch_historical(self, token: int, from_epoch: int, to_epoch: int,
+                         interval: str = "1", exchange: str = 'NSE', indices: str = True):
+        payload = json.dumps({"token": str(token),
+                              "exchange": exchange if not indices else f"{exchange}::index",
+                              "from": str(from_epoch),  # "1660128489000", 1666268893
+                              "to": str(to_epoch),  # "1660221861000", 1666355293
+                              "resolution": interval  # "1", "D"
+                              })
+        headers = {
+            'Authorization': f'Bearer {self.user_id} {self.session_id}',
+            'Content-Type': 'application/json'
+        }
+        lst = requests.post(f'{self.base_url}/chart/history', data=payload, headers=headers)
+        response = lst.json()
+        if response['stat'] == 'Not_Ok':
+            return response
+        return response['result']
+
+
+if __name__ == '__main__':
+    broker_config = get_user_config()
+    ab = AliceBroker(broker_config)
+
+    to_epoch = int(datetime.now().timestamp()*1000)
+    from_epoch = int(to_epoch - 1.5 * 24 * 3600 * 1000)
+
+    data = ab.fetch_historical(26000, from_epoch, to_epoch, "1")
+    logger.info(data)

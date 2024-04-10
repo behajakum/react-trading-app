@@ -1,28 +1,25 @@
-import dataAlice from '../../../../data/26000.json';
 import CandlestickChart from "../components/CandlestickChart";
-
-
-function getCandleDataLocal() {
-  let data = dataAlice.map(d => ({
-    time: Date.parse(d.time)/1000,
-    open: d.open,
-    high: d.high,
-    low: d.low,
-    close: d.close,
-    volume: d.volume
-}))
-  return data
-}
+import localJsonData from '../../../../data/26000.json';
+import { useState } from "react";
 
 const LwChart = () => {
-  const data =  getCandleDataLocal()
-  // console.log(data)
+  const [started, setStarted] = useState(false);
+  const handleClick = (event) => {
+      setStarted(!started)
+      event.target.style.color = started ? '' : 'salmon'
+  }
+  console.log( 'Started: '+ started.toString())
 
-    return ( 
-        <>
-          <CandlestickChart data={ data } />
-        </>
-     );
+  const url = '/api/v1/historical/26000/1'
+
+  return ( 
+      <>
+        <button onClick = { handleClick }> 
+            { started ? `Stop Updating` : `Start Updating` }
+        </button>
+        <CandlestickChart url={url} started={ started }/> 
+      </>
+    );
 }
  
 export default LwChart;

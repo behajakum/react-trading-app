@@ -1,14 +1,10 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { ColorType, createChart } from 'lightweight-charts'
-import fetchOhlcvData from "./fetchData";
 
 
 const CandlestickChart = (props) => {
-    const url = props.url
-    const started = props.started
-
-    const [csSeries, setCsSeries] = useState(null)
-    
+    const data = props.data
+    console.log(data)
     const chartContainerRef = useRef();
     const chartOptions = { 
         layout: { 
@@ -72,7 +68,6 @@ const CandlestickChart = (props) => {
         }}
     };
 
-    // Set chart
     useEffect(() => {
         const chart = createChart(chartContainerRef.current, chartOptions);
 
@@ -84,40 +79,8 @@ const CandlestickChart = (props) => {
             wickDownColor: '#ef5350'
         });
 
-        (async () => {
-            const initialData = await fetchOhlcvData(url)
-            candlestickSeries.setData(initialData.slice(0, initialData.length - 3));
-            setCsSeries(candlestickSeries)
-        })()
-
-        return () => {
-            console.log('cleanup ran for rendered chart')
-            chart.remove()
-        }
+        candlestickSeries.setData(data);
     }, [])
-
-    // Update chart
-    useEffect(() => {
-        let intervalId = null
-        if (started) {
-            intervalId = setInterval(() => {
-            console.log(`setup interval ran: ${ intervalId }`)
-
-            fetchOhlcvData(url)
-                .then(d =>  d.slice(-1)[0])
-                .then(d => {
-                    csSeries.update(d)
-                    console.log(d)
-                })
-
-          }, 20000)
-        }
-    
-        return( () => {
-          clearInterval(intervalId)
-          console.log(`removed setup interval: ${ intervalId }`)
-        })
-      }, [started])
 
     return ( 
         <div ref= { chartContainerRef }></div>
