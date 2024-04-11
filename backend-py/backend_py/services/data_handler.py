@@ -11,4 +11,9 @@ class DataHandler:
 
     def fetch_historical(self, token: int, interval: str, from_epoch: int, to_epoch: int):
         res = self.ab.fetch_historical(token, from_epoch, to_epoch, interval)
-        return res
+        return self.convert_to_epoch(res)
+
+    def convert_to_epoch(self, data: list) -> list:
+        for item in data:
+            item['time'] = int(datetime.fromisoformat(item['time']).timestamp())  # sec
+        return data

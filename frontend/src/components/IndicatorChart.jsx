@@ -7,7 +7,8 @@ const IndicatorChart = (props) => {
     const {url, started} = props
 
     const [csSeries, setCsSeries] = useState(null)
-    const [emaSeries, setEmaSeries] = useState(null)
+    const [emaFastSeries, setEmaFastSeries] = useState(null)
+    const [emaSlowSeries, setEmaSlowSeries] = useState(null)
     const chartContainerRef = useRef();
     let refCount = useRef(0)
     
@@ -140,10 +141,16 @@ const IndicatorChart = (props) => {
             wickDownColor: '#ef5350'
         });
         
-        const emaLineSeries = chart.addLineSeries({ 
+        // emas
+        const emaFastLineSeries = chart.addLineSeries({ 
             color: 'red',
-             lineWidth: 1 
+             lineWidth: 2 
         });  // ; to be tehre before async
+
+        const emaSlowLineSeries = chart.addLineSeries({ 
+            color: 'green',
+             lineWidth: 2 
+        });  
   
         (async () => {
             try {
@@ -156,9 +163,16 @@ const IndicatorChart = (props) => {
                 const emaFastData = initialData
                     .filter(d => d.EMA_9)
                     .map(d => ({time: d.time, value: d.EMA_9}))
-                // emaLineSeries.setData(emaFastData)
-                emaLineSeries.setData(emaFastData.slice(0, emaFastData.length - 10))
-                setEmaSeries(emaLineSeries)
+                // emaFastLineSeries.setData(emaFastData)
+                emaFastLineSeries.setData(emaFastData.slice(0, emaFastData.length - 10))
+                setEmaFastSeries(emaFastLineSeries)
+
+                const emaSlowData = initialData
+                    .filter(d => d.EMA_21)
+                    .map(d => ({time: d.time, value: d.EMA_21}))
+                // emaSlowLineSeries.setData(emaSlowData)
+                emaSlowLineSeries.setData(emaSlowData.slice(0, emaSlowData.length - 10))
+                setEmaSlowSeries(emaSlowLineSeries)
 
             } catch (err) {
                 console.error(err)
@@ -183,7 +197,8 @@ const IndicatorChart = (props) => {
                     .then(d => {
                         console.log(d)
                         csSeries.update(d)
-                        emaSeries.update({time: d.time, value: d.EMA_9})
+                        emaFastSeries.update({time: d.time, value: d.EMA_9})
+                        emaSlowSeries.update({time: d.time, value: d.EMA_21})
                     })
                     .catch(err=>console.error(err))
           }, 10000)

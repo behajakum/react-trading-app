@@ -11,9 +11,10 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import logging
 from backend_py.broker.broker_alice import get_alice, AliceBroker
+from pydantic import BaseModel
 
 from backend_py.config.config import get_server_config, get_system_config, get_user_config
-from backend_py.indicators.indicators import Indicators
+from backend_py.indicators.indicator import Indicator
 from backend_py.services.data_handler import DataHandler
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,15 @@ logger = logging.getLogger(__name__)
 # broker_config = get_user_config()
 # ab = AliceBroker(broker_config)
 dh = DataHandler()
-indicators = Indicators()
+indicator = Indicator()
+
+
+class IndicatorSpec(BaseModel):
+    ema: bool
+    emas: bool
+    rsi: bool
+    supertrend: bool
+
 
 app = FastAPI()
 templates = Jinja2Templates(
@@ -62,6 +71,7 @@ async def fetch_historical_local(token: int, interval: str) -> list:
     from_epoch = int(to_epoch - 1.5 * 24 * 3600 * 1000)
     with open(f'/Users/apple/Documents/Work/GitRepoLocal/react-trading-app/data/{str(token)}.json', 'r') as fp:
         data = json.load(fp)
+    data = dh.convert_to_epoch(data)
     return data
 
 
@@ -71,9 +81,11 @@ async def fetch_historical_local_indicators(token: int, interval: str):
     from_epoch = int(to_epoch - 1.5 * 24 * 3600 * 1000)
     with open(f'/Users/apple/Documents/Work/GitRepoLocal/react-trading-app/data/{str(token)}.json', 'r') as fp:
         data = json.load(fp)
+    data = dh.convert_to_epoch(data)
     df = pd.DataFrame(data)
 
-    df_ind = indicators.ema(df, 'close', 9)
+    df_ind = indicator.add_emas(df, 'close', [9, 21])
+    df_ind = indicator.add_rsi(df_ind, 'close', 14)
     # data_ind = JSONResponse(df_ind.fillna(np.nan).replace([np.nan], [None]).to_dict(orient='records'))
     # data_ind = df_ind.to_dict(orient='records')
     data_ind = df_ind.fillna(np.nan).replace([np.nan], [None]).to_dict(orient='records')

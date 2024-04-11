@@ -18,8 +18,8 @@ export function convertToEpoch(timestampData) {
 }
 
 async function fetchOhlcvData(url) {
-    const timestampData = await fetchAliceHistorical(url)
-    const candlesticks = convertToEpoch(timestampData);
+    const candlesticks = await fetchAliceHistorical(url)
+    // const candlesticks = convertToEpoch(timestampData);
     return candlesticks
 }
 
