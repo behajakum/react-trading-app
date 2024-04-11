@@ -8,6 +8,7 @@ const CandlestickChart = (props) => {
 
     const [csSeries, setCsSeries] = useState(null)
     const chartContainerRef = useRef();
+    let refCount = useRef(0)
     
     const chartOptions = { 
         layout: { 
@@ -18,7 +19,7 @@ const CandlestickChart = (props) => {
           }
         },
         width: 1425,
-        height: 760,
+        height: 740,
         localization: {
             locale: 'en-IN',
             timeFormatter: (time) => {
@@ -84,9 +85,13 @@ const CandlestickChart = (props) => {
         });
 
         (async () => {
-            const initialData = await fetchOhlcvData(url)
-            candlestickSeries.setData(initialData.slice(0, initialData.length - 3));
-            setCsSeries(candlestickSeries)
+            try {
+                const initialData = await fetchOhlcvData(url)
+                candlestickSeries.setData(initialData.slice(0, initialData.length - 10));  //TODO
+                setCsSeries(candlestickSeries)
+            } catch (err) {
+                console.error(err)
+            }
         })()
 
         return () => {
@@ -99,15 +104,20 @@ const CandlestickChart = (props) => {
     useEffect(() => {
         let intervalId = null
         if (started) {
+            
             intervalId = setInterval(() => {
-            console.log(`setup interval ran: ${ intervalId }`)
-
+            refCount.current = refCount.current + 1
+            console.log(`setup interval ran: ${ intervalId }, ${refCount.current}`)
             fetchOhlcvData(url)
-                .then(d =>  d.slice(-1)[0])
-                .then(d => csSeries.update(d))
+                .then(d =>  d.slice(-(11-refCount.current))[0])  // TODO simulation
+                .then(d => {
+                    console.log(d)
+                    csSeries.update(d)
+                })
                 .catch(err=>console.error(err))
-
-          }, 20000)
+            
+            
+          }, 10000)
         }
     
         return( () => {

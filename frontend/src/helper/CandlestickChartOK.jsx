@@ -84,10 +84,25 @@ const CandlestickChart = (props) => {
             wickDownColor: '#ef5350'
         });
 
+        // const fetchData = async () => {
+        //     try {
+        //         const initialData = await fetchOhlcvData(url)
+        //         candlestickSeries.setData(initialData.slice(0, initialData.length - 3));
+        //         setCsSeries(candlestickSeries)
+        //     } catch (err) {
+        //       console.error(err);
+        //     }
+        //   };
+        // fetchData();
+
         (async () => {
-            const initialData = await fetchOhlcvData(url)
-            candlestickSeries.setData(initialData.slice(0, initialData.length - 3));
-            setCsSeries(candlestickSeries)
+            try {
+                const initialData = await fetchOhlcvData(url)
+                candlestickSeries.setData(initialData.slice(0, initialData.length - 3));
+                setCsSeries(candlestickSeries)
+            } catch (err) {
+                console.error(err);
+            }
         })()
 
         return () => {

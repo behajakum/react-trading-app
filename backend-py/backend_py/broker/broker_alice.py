@@ -20,7 +20,8 @@ def get_alice(broker_config: dict = None) -> Aliceblue:
 
 
 class AliceBroker():
-    def __init__(self, broker_config: dict) -> None:
+    def __init__(self, broker_config: dict = None) -> None:
+        broker_config = get_user_config() if broker_config is None else broker_config
         self.user_id = broker_config['user_id']
         self.session_id = self._get_session_id(broker_config['api_key'])
         self.alice = Aliceblue(self.user_id, broker_config['api_key'], session_id=self.session_id)
@@ -55,15 +56,7 @@ class AliceBroker():
             return session['sessionID']
 
     def _historical_alice_api(self, instrument: namedtuple, from_datetime: datetime, to_datetime: datetime,
-                              interval: str = "1", indices: bool = False):
-        """
-        Get hitorical data from alice
-        :param token: int, alice instrument token
-        :param from_datetime: datetime object
-        :param to_datetime: datetime object
-        :return: dataframe, ohlcv with datetime index
-        """
-
+                              interval: str = "1", indices: bool = False) -> pd.DataFrame | dict:
         result_cols = ['open', 'high', 'low', 'close', 'volume']
 
         payload = json.dumps({"token": str(instrument.token),
@@ -90,7 +83,8 @@ class AliceBroker():
             return df[result_cols]
 
     def fetch_historical(self, token: int, from_epoch: int, to_epoch: int,
-                         interval: str = "1", exchange: str = 'NSE', indices: str = True):
+                         interval: str = "1", exchange: str = 'NSE', indices: str = True) -> list:
+        """Returns list of object"""
         payload = json.dumps({"token": str(token),
                               "exchange": exchange if not indices else f"{exchange}::index",
                               "from": str(from_epoch),  # "1660128489000", 1666268893
@@ -109,11 +103,11 @@ class AliceBroker():
 
 
 if __name__ == '__main__':
-    broker_config = get_user_config()
-    ab = AliceBroker(broker_config)
-
-    to_epoch = int(datetime.now().timestamp()*1000)
+    ab = AliceBroker()
+    token = 26000
+    to_epoch = int(datetime.now().timestamp() * 1000)
     from_epoch = int(to_epoch - 1.5 * 24 * 3600 * 1000)
-
-    data = ab.fetch_historical(26000, from_epoch, to_epoch, "1")
+    data = ab.fetch_historical(token, from_epoch, to_epoch, "1")
     logger.info(data)
+    # with open(f'/Users/apple/Documents/Work/GitRepoLocal/react-trading-app/data/{str(token)}.json', 'w') as fp:
+    #     json.dump(data, fp)

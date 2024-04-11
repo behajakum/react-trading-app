@@ -11,7 +11,8 @@ export function convertToEpoch(timestampData) {
     high: d.high,
     low: d.low,
     close: d.close,
-    volume: d.volume
+    volume: d.volume,
+    EMA_9: d.EMA_9
   }))
   return data
 }
