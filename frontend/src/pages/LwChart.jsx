@@ -11,7 +11,7 @@ const LwChart = () => {
   }
   console.log( 'Started: '+ started.toString())
 
-  const url = '/api/v1/local/indicators/26000/1'  // TODO alice
+  const url = '/api/v1/alice/indicators/26000/1'  // TODO alice
 
   return ( 
       <>

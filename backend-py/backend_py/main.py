@@ -60,25 +60,41 @@ async def login_alice(request: Request) -> dict:
 @app.get("/api/v1/alice/{token}/{interval}")
 async def fetch_historical(token: int, interval: str) -> list:
     to_epoch = int(datetime.now().timestamp() * 1000)
+    print('check')
     from_epoch = int(to_epoch - 1.5 * 24 * 3600 * 1000)
     res = dh.fetch_historical(token, interval, from_epoch, to_epoch)
     return res
 
 
+# /api/v1/local/indicators/26000/1?from_epoch=1712279777957&to_epoch=1712884577957
+@app.get("/api/v1/alice/indicators/{token}/{interval}")
+async def fetch_historical_alice_indicators(token: int, interval: str, from_epoch: int | None = None,
+                                            to_epoch: int | None = None):
+    to_epoch = to_epoch if to_epoch is not None else int(datetime.now().timestamp() * 1000)
+    from_epoch = from_epoch if from_epoch is not None else int(to_epoch - 24 * 3600 * 1000)
+
+    data = dh.fetch_historical(token, interval, from_epoch, to_epoch)
+    df = pd.DataFrame(data)
+    df_ind = indicator.add_emas(df, 'close', [9, 21])
+    df_ind = indicator.add_rsi(df_ind, 'close', 14)
+    data_ind = df_ind.fillna(np.nan).replace([np.nan], [None]).to_dict(orient='records')
+    print(f'epochs: {from_epoch}, {to_epoch}, length: {len(data_ind)}')
+    # data_ind = JSONResponse(df_ind.fillna(np.nan).replace([np.nan], [None]).to_dict(orient='records'))
+    return data_ind
+
+
 @app.get("/api/v1/local/{token}/{interval}")
 async def fetch_historical_local(token: int, interval: str) -> list:
-    to_epoch = int(datetime.now().timestamp() * 1000)
-    from_epoch = int(to_epoch - 1.5 * 24 * 3600 * 1000)
     with open(f'/Users/apple/Documents/Work/GitRepoLocal/react-trading-app/data/{str(token)}.json', 'r') as fp:
         data = json.load(fp)
     data = dh.convert_to_epoch(data)
     return data
 
 
+# q: str | None = None, short: bool = False
+
 @app.get("/api/v1/local/indicators/{token}/{interval}")
 async def fetch_historical_local_indicators(token: int, interval: str):
-    to_epoch = int(datetime.now().timestamp() * 1000)
-    from_epoch = int(to_epoch - 1.5 * 24 * 3600 * 1000)
     with open(f'/Users/apple/Documents/Work/GitRepoLocal/react-trading-app/data/{str(token)}.json', 'r') as fp:
         data = json.load(fp)
     data = dh.convert_to_epoch(data)
@@ -86,9 +102,9 @@ async def fetch_historical_local_indicators(token: int, interval: str):
 
     df_ind = indicator.add_emas(df, 'close', [9, 21])
     df_ind = indicator.add_rsi(df_ind, 'close', 14)
-    # data_ind = JSONResponse(df_ind.fillna(np.nan).replace([np.nan], [None]).to_dict(orient='records'))
-    # data_ind = df_ind.to_dict(orient='records')
+
     data_ind = df_ind.fillna(np.nan).replace([np.nan], [None]).to_dict(orient='records')
+    # data_ind = JSONResponse(df_ind.fillna(np.nan).replace([np.nan], [None]).to_dict(orient='records'))
     return data_ind
 
 

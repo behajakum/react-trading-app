@@ -106,7 +106,7 @@ if __name__ == '__main__':
     ab = AliceBroker()
     token = 26000
     to_epoch = int(datetime.now().timestamp() * 1000)
-    from_epoch = int(to_epoch - 1.5 * 24 * 3600 * 1000)
+    from_epoch = int(to_epoch - 7 * 24 * 3600 * 1000)
     data = ab.fetch_historical(token, from_epoch, to_epoch, "1")
     logger.info(data)
     # with open(f'/Users/apple/Documents/Work/GitRepoLocal/react-trading-app/data/{str(token)}.json', 'w') as fp:

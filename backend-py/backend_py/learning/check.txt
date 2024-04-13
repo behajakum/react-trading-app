@@ -1,0 +1,3 @@
+http://localhost:8000/api/v1/alice/indicators/26000/1?fromEpoch=1712891616042&toEpoch=1712895216042
+http://localhost:8000/api/v1/alice/indicators/26000/1?fromEpoch=1712892984879&toEpoch=1712896584879
+http://localhost:8000/api/v1/alice/indicators/26000/1?fromEpoch=1712893347270&toEpoch=1712896947270

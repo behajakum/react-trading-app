@@ -1,10 +1,10 @@
 import { useRef, useEffect, useState } from "react";
 import { ColorType, createChart } from 'lightweight-charts'
-import fetchOhlcvData from "./fetchData";
+import fetchOhlcvData, { fetchInitialData, fetchUpdateData } from "./fetchData";
 
 
 const IndicatorChart = (props) => {
-    const {url, started} = props
+    const { url, started } = props
 
     const [csSeries, setCsSeries] = useState(null)
     const [emaFastSeries, setEmaFastSeries] = useState(null)
@@ -155,23 +155,24 @@ const IndicatorChart = (props) => {
         (async () => {
             try {
                 const initialData = await fetchOhlcvData(url)
-                candlestickSeries.setData(initialData.slice(0, initialData.length - 10));  //TODO
+                // const initialData = await fetchInitialData(url)
+                // candlestickSeries.setData(initialData.slice(0, initialData.length - 10));  //TODO
                 console.log(initialData)
-                // candlestickSeries.setData(initialData);  //TODO
+                candlestickSeries.setData(initialData); 
                 setCsSeries(candlestickSeries)
 
                 const emaFastData = initialData
                     .filter(d => d.EMA_9)
                     .map(d => ({time: d.time, value: d.EMA_9}))
-                // emaFastLineSeries.setData(emaFastData)
-                emaFastLineSeries.setData(emaFastData.slice(0, emaFastData.length - 10))
+                emaFastLineSeries.setData(emaFastData)
+                // emaFastLineSeries.setData(emaFastData.slice(0, emaFastData.length - 10))
                 setEmaFastSeries(emaFastLineSeries)
 
                 const emaSlowData = initialData
                     .filter(d => d.EMA_21)
                     .map(d => ({time: d.time, value: d.EMA_21}))
-                // emaSlowLineSeries.setData(emaSlowData)
-                emaSlowLineSeries.setData(emaSlowData.slice(0, emaSlowData.length - 10))
+                emaSlowLineSeries.setData(emaSlowData)
+                // emaSlowLineSeries.setData(emaSlowData.slice(0, emaSlowData.length - 10))
                 setEmaSlowSeries(emaSlowLineSeries)
 
             } catch (err) {
@@ -192,8 +193,10 @@ const IndicatorChart = (props) => {
             intervalId = setInterval(() => {
                 refCount.current = refCount.current + 1  // TODO for testing
                 console.log(`setup interval ran: ${ intervalId }, ${refCount.current}`)
-                fetchOhlcvData(url)
-                    .then(d =>  d.slice(-(11-refCount.current))[0])  // TODO simulation
+                // fetchOhlcvData(url)
+                fetchUpdateData(url)
+                    // .then(d =>  d.slice(-(11-refCount.current))[0])  // TODO simulation
+                    .then(d =>  d.slice(-1)[0])  // TODO simulation
                     .then(d => {
                         console.log(d)
                         csSeries.update(d)
@@ -201,7 +204,7 @@ const IndicatorChart = (props) => {
                         emaSlowSeries.update({time: d.time, value: d.EMA_21})
                     })
                     .catch(err=>console.error(err))
-          }, 10000)
+          }, 30000)
         }
     
         return( () => {
